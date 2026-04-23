@@ -287,6 +287,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 def main():
     logger.info("🚀 Starting Free Coder Bot 1...")
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -296,8 +297,23 @@ def main():
     app.add_handler(CommandHandler("model", model_command))
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    # drop_pending_updates + allowed_updates to avoid conflicts
+    app.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
+        close_loop=False,
+    )
 
 
 if __name__ == "__main__":
-    main()
+    import time
+    for i in range(5):
+        try:
+            main()
+            break
+        except Exception as e:
+            if "Conflict" in str(e):
+                logger.warning(f"Conflict on start, waiting 10s... (attempt {i+1})")
+                time.sleep(10)
+            else:
+                raise
